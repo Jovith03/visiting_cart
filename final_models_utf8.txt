@@ -1,9 +1,0 @@
-﻿--- Fetching Supported Models ---
-Available Models:
-- models/gemini-2.5-flash (Supports: generateContent, countTokens, createCachedContent, batchGenerateContent)
-- models/gemini-2.5-pro (Supports: generateContent, countTokens, createCachedContent, batchGenerateContent)
-- models/gemini-2.0-flash (Supports: generateContent, countTokens, createCachedContent, batchGenerateContent)
-- models/gemini-2.0-flash-001 (Supports: generateContent, countTokens, createCachedContent, batchGenerateContent)
-- models/gemini-2.0-flash-lite-001 (Supports: generateContent, countTokens, createCachedContent, batchGenerateContent)
-- models/gemini-2.0-flash-lite (Supports: generateContent, countTokens, createCachedContent, batchGenerateContent)
-- models/gemini-2.5-flash-lite (Supports: generateContent, countTokens, createCachedContent, batchGenerateContent)
