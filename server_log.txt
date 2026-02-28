@@ -1,6 +1,0 @@
-AI Ready (will try models on request)
-Server running at http://localhost:3000
-Database Tables Verified/Created
-AI Task: Trying model gemini-2.0-flash...
-AI Task: Trying model gemini-2.5-flash...
-AI Success with gemini-2.5-flash
