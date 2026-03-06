@@ -1,0 +1,11 @@
+{
+    "name": "dog-image-project",
+    "version": "1.0.0",
+    "description": "AI Business Card Scanner - Client-Server Architecture",
+    "scripts": {
+        "start": "node src/server.js"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
