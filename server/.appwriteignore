@@ -1,0 +1,14 @@
+node_modules/
+uploads/
+.env
+*.tar.gz
+eng.traineddata
+*.txt
+*.log
+code.js
+Untitled-1.js
+list_models_rest.js
+test_models.js
+test-require.js
+setup-appwrite.js
+server.js

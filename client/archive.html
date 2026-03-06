@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Vault | AI Cardio Archive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --bg: #030712;
+            --card: #111827;
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image: radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+        }
+
+        nav {
+            margin-bottom: 40px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .nav-link.active {
+            color: var(--text);
+            background: var(--glass);
+            border-color: var(--glass-border);
+        }
+
+        .vault-container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .vault-card {
+            background: var(--card);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vault-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.2);
+        }
+
+        .card-image-wrapper {
+            width: 100%;
+            height: 200px;
+            background: #1f2937;
+            position: relative;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .vault-card:hover .card-image {
+            opacity: 1;
+        }
+
+        .card-content {
+            padding: 24px;
+            flex-grow: 1;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .card-subtitle {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .card-details {
+            display: grid;
+            gap: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .detail-icon {
+            width: 16px;
+            text-align: center;
+        }
+
+        .card-actions {
+            padding: 16px 24px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px;
+            color: var(--text-muted);
+        }
+
+        .loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--glass);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Digital Vault</h1>
+        <p style="color: var(--text-muted);">Your archive of extracted business intelligence</p>
+    </header>
+
+    <nav>
+        <a href="/" class="nav-link">Scanner</a>
+        <a href="/archive.html" class="nav-link active">Digital Vault</a>
+    </nav>
+
+    <div id="loader" class="loader-spinner"></div>
+    <div class="vault-container" id="vaultContainer">
+        <!-- Cards injected here -->
+    </div>
+
+    <script src="config.js"></script>
+
+    <script>
+        const vaultContainer = document.getElementById('vaultContainer');
+        const loader = document.getElementById('loader');
+
+        async function fetchArchive() {
+            try {
+                const baseUrl = window.ENV?.API_BASE_URL || '';
+                const response = await fetch(`${baseUrl}/api/archive`);
+                const data = await response.json();
+                renderCards(data);
+            } catch (err) {
+                vaultContainer.innerHTML = '<div class="empty-state">Failed to load archive</div>';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function renderCards(cards) {
+            if (cards.length === 0) {
+                vaultContainer.innerHTML = '<div class="empty-state">No cards scanned yet. Start with the Scanner!</div>';
+                return;
+            }
+
+            vaultContainer.innerHTML = cards.map(c => `
+                <div class="vault-card" id="card-${c.id}">
+                    <div class="card-image-wrapper">
+                        <img src="${window.ENV?.API_BASE_URL || ''}/api/image/${c.photoId}" class="card-image" alt="Business Card">
+                    </div>
+
+                    <div class="card-content">
+                        <div class="card-title">${c.name || 'Unknown Name'}</div>
+                        <div class="card-subtitle">${c.company || 'Private'}</div>
+                        <div class="card-details">
+                            <div class="detail-row">
+                                <span class="detail-icon">📞</span>
+                                <span>${c.phone || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-icon">✉️</span>
+                                <span>${c.email || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-icon">🌍</span>
+                                <span>${c.website || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row" style="margin-top: 8px;">
+                                <span class="detail-icon">📍</span>
+                                <span style="font-size: 0.75rem;">${c.address || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <span style="font-size: 0.7rem; color: var(--text-muted);">${new Date(c.created_at).toLocaleDateString()}</span>
+                        <button class="btn-delete" onclick="deleteCard('${c.id}')">Delete</button>
+                    </div>
+
+                </div>
+            `).join('');
+        }
+
+        async function deleteCard(id) {
+            if (!confirm('Are you sure you want to remove this card?')) return;
+
+            try {
+                const baseUrl = window.ENV?.API_BASE_URL || '';
+                const response = await fetch(`${baseUrl}/api/archive/` + id, { method: 'DELETE' });
+                if (response.ok) {
+                    document.getElementById('card-' + id).remove();
+                    if (vaultContainer.children.length === 0) {
+                        vaultContainer.innerHTML = '<div class="empty-state">No cards scanned yet.</div>';
+                    }
+                }
+            } catch (err) {
+                alert('Delete failed');
+            }
+        }
+
+        fetchArchive();
+    </script>
+</body>
+
+</html>

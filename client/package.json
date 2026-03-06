@@ -1,0 +1,9 @@
+{
+    "name": "dog-image-client",
+    "version": "1.0.0",
+    "description": "Frontend for AI Business Card Scanner",
+    "scripts": {
+        "start": "npx live-server --port=5500"
+    },
+    "dependencies": {}
+}

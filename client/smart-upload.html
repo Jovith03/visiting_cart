@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Image Uploader (< 200KB)</title>
+            <style>
+                :root {
+                    --primary: #4f46e5;
+                    --success: #10b981;
+                    --warning: #f59e0b;
+                    --bg: #f8fafc;
+                    --card: #ffffff;
+                }
+
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    background-color: var(--bg);
+                    padding: 40px 20px;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .container {
+                    background: var(--card);
+                    padding: 30px;
+                    border-radius: 16px;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+                    width: 100%;
+                    max-width: 500px;
+                }
+
+                h1 {
+                    font-size: 1.5rem;
+                    color: #1e293b;
+                    margin-bottom: 8px;
+                    text-align: center;
+                }
+
+                .subtitle {
+                    text-align: center;
+                    color: #64748b;
+                    font-size: 0.9rem;
+                    margin-bottom: 24px;
+                }
+
+                .drop-zone {
+                    border: 2px dashed #cbd5e1;
+                    border-radius: 12px;
+                    padding: 40px 20px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    margin-bottom: 20px;
+                }
+
+                .drop-zone:hover {
+                    border-color: var(--primary);
+                    background: #f5f3ff;
+                }
+
+                #fileInput {
+                    display: none;
+                }
+
+                .preview-box {
+                    display: none;
+                    margin-top: 20px;
+                    padding-top: 20px;
+                    border-top: 1px solid #e2e8f0;
+                }
+
+                #previewImage {
+                    width: 100%;
+                    border-radius: 8px;
+                    margin-bottom: 12px;
+                    border: 1px solid #e2e8f0;
+                }
+
+                .stats {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                    margin-bottom: 15px;
+                    font-size: 0.875rem;
+                }
+
+                .stat-item {
+                    padding: 10px;
+                    background: #f1f5f9;
+                    border-radius: 8px;
+                    text-align: center;
+                }
+
+                .stat-label {
+                    display: block;
+                    color: #64748b;
+                    font-size: 0.75rem;
+                    margin-bottom: 2px;
+                }
+
+                .stat-value {
+                    font-weight: 700;
+                    color: #1e293b;
+                }
+
+                .btn {
+                    display: block;
+                    width: 100%;
+                    padding: 14px;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-size: 1rem;
+                }
+
+                .btn-primary {
+                    background-color: var(--primary);
+                    color: white;
+                }
+
+                .btn-primary:hover {
+                    background-color: #4338ca;
+                }
+
+                .btn-primary:disabled {
+                    background-color: #94a3b8;
+                    cursor: not-allowed;
+                }
+
+                #status {
+                    margin-top: 15px;
+                    text-align: center;
+                    font-size: 0.875rem;
+                    min-height: 20px;
+                }
+
+                .saving-badge {
+                    display: inline-block;
+                    padding: 2px 8px;
+                    background: var(--success);
+                    color: white;
+                    border-radius: 12px;
+                    font-size: 0.7rem;
+                    margin-left: 5px;
+                }
+            </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Auto-Compressor</h1>
+        <p class="subtitle">Ensures all uploads are under 200KB automatically</p>
+
+        <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+            <p id="dropText">Click or drag image to upload</p>
+            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px;">Smart Size: < 200KB guarantee</p>
+                    <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="preview-box" id="previewBox">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Original</span>
+                    <span class="stat-value" id="originalSize">0 KB</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Final Upload</span>
+                    <span class="stat-value" id="compressedSize" style="color: var(--success);">0 KB</span>
+                </div>
+            </div>
+            <img id="previewImage" alt="Preview">
+            <button class="btn btn-primary" id="uploadBtn">Upload to Server</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script src="http://localhost:3000/config.js"></script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const previewBox = document.getElementById('previewBox');
+        const previewImage = document.getElementById('previewImage');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const status = document.getElementById('status');
+        const originalSizeText = document.getElementById('originalSize');
+        const compressedSizeText = document.getElementById('compressedSize');
+
+        const SIZE_LIMIT_KB = 200;
+        const SIZE_LIMIT_BYTES = SIZE_LIMIT_KB * 1024;
+        let finalBlob = null;
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Simple validation
+            if (!file.type.startsWith('image/')) {
+                alert("Please select a valid image file.");
+                return;
+            }
+
+            status.innerText = "Analyzing size...";
+            status.style.color = "#64748b";
+            previewBox.style.display = "none";
+
+            originalSizeText.innerText = `${(file.size / 1024).toFixed(1)} KB`;
+
+            try {
+                if (file.size <= SIZE_LIMIT_BYTES) {
+                    // Scenario 1: Under 200KB, use as is
+                    status.innerText = "Size is perfect! Using original file.";
+                    status.style.color = varSuccess();
+                    finalBlob = file;
+                    previewImage.src = URL.createObjectURL(file);
+                    compressedSizeText.innerText = `${(file.size / 1024).toFixed(1)} KB`;
+                } else {
+                    // Scenario 2: Over 200KB, dynamic compression
+                    status.innerText = "Size > 200KB... Starting smart compression...";
+                    status.style.color = "#f59e0b";
+
+                    const result = await smartCompress(file, SIZE_LIMIT_BYTES);
+                    finalBlob = result.blob;
+
+                    previewImage.src = URL.createObjectURL(finalBlob);
+                    compressedSizeText.innerText = `${(finalBlob.size / 1024).toFixed(1)} KB`;
+                    status.innerText = "Successfully compressed to under 200KB!";
+                    status.style.color = "#10b981";
+                }
+
+                previewBox.style.display = "block";
+            } catch (err) {
+                console.error(err);
+                status.innerText = "❌ Processing Error: " + err.message;
+                status.style.color = "#ef4444";
+            }
+        });
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!finalBlob) return;
+
+            uploadBtn.disabled = true;
+            status.innerText = "🚀 Sending to server...";
+            status.style.color = "#4f46e5";
+
+            const formData = new FormData();
+            formData.append('card', finalBlob, 'optimized_image.jpg');
+
+            try {
+                const baseUrl = window.ENV?.API_BASE_URL || '';
+                const response = await fetch(`${baseUrl}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    status.innerText = "✅ Successfully Saved!";
+                    status.style.color = "#10b981";
+                } else {
+                    throw new Error(result.error || "Server upload failed");
+                }
+            } catch (err) {
+                status.innerText = "❌ Upload Failed: " + err.message;
+                status.style.color = "#ef4444";
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Dynamic Recursive Compression
+        async function smartCompress(file, targetBytes) {
+            const img = await loadImage(file);
+            let quality = 0.9;
+            let currentWidth = img.width;
+            let currentHeight = img.height;
+            let blob = null;
+
+            // Log for debugging
+            console.log(`Starting smart compression for ${file.name} (${file.size} bytes)`);
+
+            // Loop until size matches or we hit a wall
+            while (quality > 0.1) {
+                blob = await canvasToBlob(img, currentWidth, currentHeight, quality);
+
+                if (blob.size <= targetBytes) {
+                    console.log(`Compression success! Target: ${targetBytes}, Final: ${blob.size}, Quality: ${quality}`);
+                    return { blob };
+                }
+
+                // If quality is already low, start reducing resolution too
+                if (quality < 0.5) {
+                    currentWidth *= 0.8;
+                    currentHeight *= 0.8;
+                }
+
+                quality -= 0.1; // Reduce quality in steps
+            }
+
+            // Absolute last resort - tiny thumbnail
+            if (blob.size > targetBytes) {
+                blob = await canvasToBlob(img, 400, Math.round(400 * (img.height / img.width)), 0.5);
+            }
+
+            return { blob };
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        }
+
+        function canvasToBlob(img, width, height, quality) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+            });
+        }
+
+        function varSuccess() { return "#10b981"; }
+    </script>
+</body>
+
+</html>

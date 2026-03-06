@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visiting Card AI - Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 30px;
+            text-align: left;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .result-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .value {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .loader {
+            display: none;
+            margin: 20px auto;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .raw-text {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Card Scanner AI</h1>
+        <p>Upload a business card to extract info automatically</p>
+
+        <form id="uploadForm">
+            <div class="upload-area">
+                <div id="fileName">Drop image here or click to browse</div>
+                <input type="file" name="card" id="cardInput" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">Process Card</button>
+        </form>
+
+        <div class="loader" id="loader"></div>
+
+        <div id="result">
+            <h3 style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                Extracted Data</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const input = document.getElementById('cardInput');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+        const result = document.getElementById('result');
+        const resultContent = document.getElementById('resultContent');
+
+        const SIZE_LIMIT_BYTES = 200 * 1024;
+        let finalUploadBlob = null;
+
+        input.onchange = () => {
+            if (input.files.length > 0) {
+                const file = input.files[0];
+                const sizeKB = (file.size / 1024).toFixed(1);
+                fileName.innerHTML = `${file.name} (${sizeKB} KB)`;
+                fileName.style.color = '#10b981';
+
+                if (file.size <= SIZE_LIMIT_BYTES) {
+                    finalUploadBlob = file;
+                } else {
+                    finalUploadBlob = null; // Will compress on submit
+                }
+            }
+        };
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const originalFile = input.files[0];
+
+            if (!originalFile) {
+                alert('Please select a business card image first.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loader.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                // Compression Logic
+                if (!finalUploadBlob) {
+                    fileName.innerText = "Applying Smart Compression < 200KB...";
+                    const compressionResult = await smartCompress(originalFile, SIZE_LIMIT_BYTES);
+                    finalUploadBlob = compressionResult.blob;
+
+                    const finalSizeKB = (finalUploadBlob.size / 1024).toFixed(1);
+                    fileName.innerHTML = `${originalFile.name}<br>Optimized: ${finalSizeKB} KB (Success)`;
+                }
+
+                const formData = new FormData();
+                formData.append('card', finalUploadBlob, 'optimized_card.jpg');
+
+                const baseUrl = window.ENV?.API_BASE_URL || 'http://localhost:3000';
+                const response = await fetch(`${baseUrl}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultContent.innerHTML = `
+                        <div style="margin-top: 10px; font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 15px;">AI EXTRACTION SUCCESS:</div>
+                        <div class="raw-text" style="font-size: 1.1rem; line-height: 1.6; color: #fff;">${data.extracted_text || JSON.stringify(data.data, null, 2)}</div>
+                        <div style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);">Saved to database.</div>
+                    `;
+                    result.style.display = 'block';
+                } else {
+                    alert('Error: ' + (data.details || data.error));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection failed. Make sure the server is running.');
+            } finally {
+                submitBtn.disabled = false;
+                loader.style.display = 'none';
+            }
+        };
+
+        // --- Compression Helpers ---
+        async function smartCompress(file, targetBytes) {
+            const img = await loadImage(file);
+            let quality = 0.9;
+            let width = img.width;
+            let height = img.height;
+            let blob = null;
+
+            while (quality > 0.1) {
+                blob = await canvasToBlob(img, width, height, quality);
+                if (blob.size <= targetBytes) return { blob };
+
+                if (quality < 0.5) {
+                    width *= 0.85;
+                    height *= 0.85;
+                }
+                quality -= 0.1;
+            }
+
+            blob = await canvasToBlob(img, 600, Math.round(600 * (img.height / img.width)), 0.5);
+            return { blob };
+        }
+
+        function loadImage(file) {
+            return new Promise((r, j) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => r(img);
+                    img.onerror = j;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function canvasToBlob(img, width, height, quality) {
+            return new Promise((r) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((b) => r(b), 'image/jpeg', quality);
+            });
+        }
+    </script>
+</body>
+
+</html>

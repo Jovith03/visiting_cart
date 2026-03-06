@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cardio | Intelligent Business Card Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.5);
+            --bg: #030712;
+            --card: #111827;
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #10b981;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            margin-bottom: 12px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 500px;
+        }
+
+        nav {
+            margin-bottom: 40px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .nav-link.active {
+            color: var(--text);
+            background: var(--glass);
+            border-color: var(--glass-border);
+        }
+
+        .main-card {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        .upload-section {
+            border: 2px dashed var(--glass-border);
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .upload-section.dragover {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px 32px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px -5px var(--primary-glow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px var(--primary-glow);
+            background: #7c3aed;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #resultArea {
+            margin-top: 40px;
+            display: none;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: var(--glass);
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            border: 1px solid var(--glass-border);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>AI Cardio</h1>
+        <p class="subtitle">Intelligent Business Card Scanner & Digital Vault</p>
+    </header>
+
+    <nav>
+        <a href="/" class="nav-link active">Scanner</a>
+        <a href="/archive.html" class="nav-link">Digital Vault</a>
+    </nav>
+
+    <div class="main-card">
+        <form id="uploadForm">
+            <div class="upload-section" id="dropZone">
+                <span class="upload-icon">📇</span>
+                <h3 id="statusText">Drop business card here</h3>
+                <p style="color: var(--text-muted); margin-top: 8px;">or click to browse from files</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <img id="preview" class="image-preview">
+
+            <button type="submit" class="btn-primary" id="submitBtn">
+                <span id="btnText">Process with AI</span>
+                <div class="loader" id="loader"></div>
+            </button>
+        </form>
+
+        <div id="resultArea">
+            <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Extracted Intelligence</h2>
+            <div class="result-grid" id="resultGrid">
+                <!-- Dynamic Content -->
+            </div>
+            <div style="margin-top: 30px; text-align: center;">
+                <p style="color: var(--accent); font-weight: 500;">✓ Saved to Digital Vault</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const statusText = document.getElementById('statusText');
+        const form = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+        const btnText = document.getElementById('btnText');
+        const resultArea = document.getElementById('resultArea');
+        const resultGrid = document.getElementById('resultGrid');
+
+        const SIZE_LIMIT_BYTES = 200 * 1024;
+        let finalUploadBlob = null;
+
+        // Drag & Drop
+        dropZone.onclick = () => fileInput.click();
+
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        };
+
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        };
+
+        fileInput.onchange = () => {
+            if (fileInput.files.length) handleFile(fileInput.files[0]);
+        };
+
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            const originalSizeKB = (file.size / 1024).toFixed(1);
+            statusText.innerHTML = `${file.name}<br><span style="font-size: 0.8rem; opacity: 0.7;">Original: ${originalSizeKB} KB</span>`;
+
+            // Show initial preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Prepare the blob
+            if (file.size <= SIZE_LIMIT_BYTES) {
+                finalUploadBlob = file;
+                console.log("File is under 200KB, no compression needed.");
+            } else {
+                finalUploadBlob = null; // Will compress on submit
+            }
+        }
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const originalFile = fileInput.files[0];
+
+            if (!originalFile) {
+                alert('Please select an image first');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loader.style.display = 'block';
+            btnText.innerText = 'Optimizing...';
+            resultArea.style.display = 'none';
+
+            try {
+                // Compression Step
+                if (!finalUploadBlob) {
+                    btnText.innerText = 'Compressing...';
+                    const result = await smartCompress(originalFile, SIZE_LIMIT_BYTES);
+                    finalUploadBlob = result.blob;
+
+                    // Update preview and status with compressed info
+                    preview.src = URL.createObjectURL(finalUploadBlob);
+                    const finalSizeKB = (finalUploadBlob.size / 1024).toFixed(1);
+                    statusText.innerHTML = `${originalFile.name}<br><span style="font-size: 0.8rem; color: #10b981;">Optimized: ${finalSizeKB} KB</span>`;
+                }
+
+                btnText.innerText = 'Analyzing with AI...';
+                const formData = new FormData();
+                formData.append('card', finalUploadBlob, 'optimized_card.jpg');
+
+                const baseUrl = window.ENV?.API_BASE_URL || '';
+                const response = await fetch(`${baseUrl}/api/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    renderResult(result.data);
+                    resultArea.style.display = 'block';
+                    btnText.innerText = 'Scan Another';
+                    finalUploadBlob = null; // Reset for next scan
+                } else {
+                    alert('Error: ' + result.error);
+                    btnText.innerText = 'Try Again';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection Error: ' + err.message);
+                btnText.innerText = 'Try Again';
+            } finally {
+                submitBtn.disabled = false;
+                loader.style.display = 'none';
+            }
+        };
+
+        // --- Smart Compression Logic ---
+        async function smartCompress(file, targetBytes) {
+            const img = await loadImage(file);
+            let quality = 0.9;
+            let width = img.width;
+            let height = img.height;
+            let blob = null;
+
+            while (quality > 0.1) {
+                blob = await canvasToBlob(img, width, height, quality);
+                if (blob.size <= targetBytes) return { blob };
+
+                if (quality < 0.5) {
+                    width *= 0.85;
+                    height *= 0.85;
+                }
+                quality -= 0.1;
+            }
+
+            // Final fallback
+            blob = await canvasToBlob(img, 600, Math.round(600 * (img.height / img.width)), 0.5);
+            return { blob };
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                };
+            });
+        }
+
+        function canvasToBlob(img, w, h, q) {
+            return new Promise((r) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                canvas.toBlob((b) => r(b), 'image/jpeg', q);
+            });
+        }
+
+        function renderResult(data) {
+            const fields = [
+                { label: 'Name', value: data.name },
+                { label: 'Company', value: data.company },
+                { label: 'Phone', value: data.phone },
+                { label: 'Email', value: data.email },
+                { label: 'Website', value: data.website },
+                { label: 'Address', value: data.address }
+            ];
+
+            resultGrid.innerHTML = fields.map(f => `
+                <div class="info-item">
+                    <div class="info-label">${f.label}</div>
+                    <div class="info-value">${f.value || 'N/A'}</div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+
+</html>

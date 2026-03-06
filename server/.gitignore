@@ -1,0 +1,7 @@
+node_modules/
+uploads/
+.env
+*.tar.gz
+eng.traineddata
+code.tar.gz
+push_log.txt

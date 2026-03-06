@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor & Uploader</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary);
+            background: #f5f3ff;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-box {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        #previewImage {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stats {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+
+        .btn-primary:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Smart Image Upload</h1>
+        <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+            <p id="dropText">Click to upload image</p>
+            <p style="font-size: 0.8rem; color: #94a3b8;">Max 800px width @ 70% quality</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="preview-box" id="previewBox">
+            <div class="stats">
+                <span id="originalSize"></span>
+                <span id="compressedSize" style="color: var(--success); font-weight: bold;"></span>
+            </div>
+            <img id="previewImage" alt="Preview">
+            <button class="btn btn-primary" id="uploadBtn">Upload Compressed Image</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script src="http://localhost:3000/config.js"></script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const previewBox = document.getElementById('previewBox');
+        const previewImage = document.getElementById('previewImage');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const status = document.getElementById('status');
+        const originalSizeText = document.getElementById('originalSize');
+        const compressedSizeText = document.getElementById('compressedSize');
+
+        let compressedBlob = null;
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            status.innerText = "Compressing...";
+            status.style.color = "#64748b";
+            previewBox.style.display = "none";
+
+            try {
+                const result = await compressImage(file, 800, 0.7);
+                compressedBlob = result.blob;
+
+                // Update Preview and Stats
+                previewImage.src = URL.createObjectURL(compressedBlob);
+                originalSizeText.innerText = `Original: ${(file.size / 1024).toFixed(1)} KB`;
+                compressedSizeText.innerText = `Compressed: ${(compressedBlob.size / 1024).toFixed(1)} KB`;
+
+                previewBox.style.display = "block";
+                status.innerText = "Ready to upload";
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Error processing image";
+                status.style.color = "#ef4444";
+            }
+        });
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!compressedBlob) return;
+
+            uploadBtn.disabled = true;
+            status.innerText = "Uploading to server...";
+
+            const formData = new FormData();
+            // Using 'card' field name to match existing backend logic
+            formData.append('card', compressedBlob, 'compressed_image.jpg');
+
+            try {
+                const baseUrl = window.ENV?.API_BASE_URL || '';
+                const response = await fetch(`${baseUrl}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    status.innerText = "✅ Upload Successful!";
+                    status.style.color = "#10b981";
+                    console.log("Server response:", result);
+                } else {
+                    throw new Error(result.error || "Upload failed");
+                }
+            } catch (err) {
+                status.innerText = "❌ Upload Failed: " + err.message;
+                status.style.color = "#ef4444";
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+
+        function compressImage(file, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        // Maintain aspect ratio
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                resolve({ blob, width, height });
+                            } else {
+                                reject(new Error("Canvas toBlob failed"));
+                            }
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = () => reject(new Error("Image load failed"));
+                };
+                reader.onerror = () => reject(new Error("File read failed"));
+            });
+        }
+    </script>
+</body>
+
+</html>

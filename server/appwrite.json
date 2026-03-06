@@ -1,0 +1,32 @@
+{
+    "projectId": "69a7b9e7001cf755b2bd",
+    "projectName": "AI Cardio",
+    "functions": [
+        {
+            "$id": "ai-cardio-api",
+            "name": "AI Cardio API",
+            "runtime": "node-20.0",
+            "path": "server",
+            "entrypoint": "src/main.js",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "schedule": "",
+            "timeout": 30,
+            "enabled": true,
+            "logging": true,
+            "installationId": "cloud",
+            "providerRepositoryId": "",
+            "providerBranch": "",
+            "providerRootDirectory": "",
+            "providerSilentMode": false,
+            "vars": {
+                "APPWRITE_DATABASE_ID": "69a7fb82002de3c1dd32",
+                "APPWRITE_COLLECTION_ID": "69a7fb84002c1f3b0445",
+                "APPWRITE_BUCKET_ID": "69a7fb970021d9d917f2",
+                "GEMINI_API_KEY": "AIzaSyCE66AXHR2bvblESqwRw3FycSdHQnxlo5U"
+            }
+        }
+    ]
+}
