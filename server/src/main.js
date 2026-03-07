@@ -86,7 +86,7 @@ module.exports = async function (context) {
             // 2. AI Extraction (Gemini)
             log("Calling Gemini AI...");
             const prompt = `Extract info from business card. Return ONLY JSON: name, phone, email, address, website, company. No markdown.`;
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const aiResult = await model.generateContent([
                 { inlineData: { data: base64Image, mimeType: "image/jpeg" } },
                 { text: prompt }
